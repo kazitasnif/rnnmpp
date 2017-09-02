@@ -4,8 +4,8 @@ task=exp
 prefix_event=event
 prefix_time=time
 
-DATA_ROOT=$HOME/Research/NeuralPointProcess/data/synthetic/$task
-RESULT_ROOT=$HOME/scratch/results/NeuralPointProcess
+DATA_ROOT=$HOME/NeuralPointProcess/data/synthetic/$task
+RESULT_ROOT=$HOME/NeuralPointProcess/scratch/results/NeuralPointProcess
 
 hist=0
 gru=0
@@ -15,7 +15,7 @@ h2=0
 bsize=64
 bptt=3
 learning_rate=0.01
-max_iter=10000000
+max_iter=1000000
 cur_iter=0
 T=0
 w_scale=0.01

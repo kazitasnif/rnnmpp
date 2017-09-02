@@ -236,6 +236,7 @@ public:
         
         for (unsigned i = 0; i < available.size(); ++i)
             available[i] = true;
+	std::cout << available.size() << std::endl;
         assert(available.size() >= this->batch_size);
         
         for (unsigned i = 0; i < this->batch_size; ++i)

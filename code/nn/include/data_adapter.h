@@ -2,6 +2,7 @@
 #define DATA_ADAPTER_H
 
 #include "data_loader.h"
+#include "fmt/printf.h" 
 #include <map>
 
 template<MatMode mode>
@@ -151,6 +152,7 @@ inline void LoadDataFromFile()
     assert(raw_event_test.size() == raw_time_test.size());
 
     size_t num_events = GetNumEvents(raw_event_train, raw_event_test);
+    std::cerr << "num events: " << num_events << std::endl;
     train_data = new DataLoader<TRAIN>(num_events, cfg::batch_size); 
     test_data = new DataLoader<TEST>(num_events, cfg::batch_size);
     val_data = new DataLoader<TEST>(num_events, 1);

@@ -1,13 +1,17 @@
 dir_guard = @mkdir -p $(@D)
 
-CUDA_HOME := /usr/local/cuda
-MKL_ROOT := /opt/intel/mkl
+MKL_ROOT := /opt/linux/centos/7.x/x86_64/pkgs/intel/mkl/2017.2.174/compilers_and_libraries_2017.4.196/linux/mkl
+#source $(which mklvars.sh) MKL_ROOT
+CUDA_HOME := /opt/linux/centos/7.x/x86_64/pkgs/cuda/7.0
+#CUDA_HOME := /usr/local/cuda
+#MKL_ROOT := /opt/intel/mkl
+
 
 FIND := find
 CXX := g++
 NVCC := $(CUDA_HOME)/bin/nvcc
-CXXFLAGS += -Wall -O2 -std=c++11
-LDFLAGS += -lm -L$(CUDA_HOME)/lib64 -lcudart -lcublas -lcurand -lcusparse -lmkl_rt -lfmt -lwht
+CXXFLAGS += -Wall -O2 -std=c++11 -Wl,-rpath=/rhome/kislam/build/fmt
+LDFLAGS += -lm -L$(CUDA_HOME)/lib64 -L/rhome/kislam/build/fmt -lcudart -lcublas -lcurand -lcusparse -lmkl_rt -lfmt #-lwht
 CUDA_ARCH := -gencode arch=compute_20,code=sm_20 \
 		-gencode arch=compute_20,code=sm_21 \
 		-gencode arch=compute_30,code=sm_30 \
