@@ -4,8 +4,8 @@ task=exp
 prefix_event=event
 prefix_time=time
 
-DATA_ROOT=$HOME/NeuralPointProcess/data/synthetic/$task
-RESULT_ROOT=$HOME/NeuralPointProcess/scratch/results/NeuralPointProcess
+DATA_ROOT=$HOME/rnnmpp/data/synthetic/$task
+RESULT_ROOT=$HOME/rnnmpp/scratch/results/NeuralPointProcess
 
 hist=0
 gru=0
