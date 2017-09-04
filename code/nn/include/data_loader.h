@@ -23,19 +23,20 @@ public:
     {
         event_sequences.clear();
         time_sequences.clear();
-        time_label_sequences.clear();
+        value_sequences.clear();
+	time_label_sequences.clear();
+	value_label_sequences.clear();
         cursors.resize(batch_size);
         index_pool.clear();
-        num_samples = 0;
-        initialized = false;
-    }
-    
-    inline void InsertSequence(int* event_seq, Dtype* time_seq, Dtype* time_label, int seq_len)
+    } 
+    inline void InsertSequence(int* event_seq, Dtype* time_seq, Dtype* time_label, Dtype* value_seq 
+	, int seq_len)
     {
         num_samples += seq_len - 1;
         InsertSequence(event_seq, event_sequences, seq_len);
         InsertSequence(time_seq, time_sequences, seq_len); 
         InsertSequence(time_label, time_label_sequences, seq_len - 1); 
+	InsertSequence(value_seq, value_sequences, seq_len);
     }
     
     virtual void StartNewEpoch()
@@ -98,6 +99,7 @@ public:
     std::vector< std::pair<unsigned, unsigned> > cursors;                 
     std::vector< std::vector<int> > event_sequences;
     std::vector< std::vector<Dtype> > time_sequences, time_label_sequences;
+    std::vector< std::vector<Dtype> > value_sequences, value_label_sequences;
     std::deque< unsigned > index_pool;
 };
 
@@ -119,9 +121,11 @@ public:
     inline void NextBpttBatch(IEventTimeLoader<mode>* etloader, 
                               int bptt, IMatrix<mode, Dtype>* g_last_hidden,
                               std::vector< IMatrix<mode, Dtype>* >& g_event_input,
-                              std::vector< IMatrix<mode, Dtype>* >& g_time_input, 
+                              std::vector< IMatrix<mode, Dtype>* >& g_time_input,
+			      std::vector< IMatrix<mode, Dtype>* >& g_value_input, 
                               std::vector< IMatrix<mode, Dtype>* >& g_event_label,
-                              std::vector< IMatrix<mode, Dtype>* >& g_time_label)
+                              std::vector< IMatrix<mode, Dtype>* >& g_time_label,
+			      std::vector< IMatrix<mode, Dtype>* >& g_value_label)
     {
         if (!initialized)
             this->StartNewEpoch();
@@ -138,7 +142,8 @@ public:
         {                                  
             etloader->LoadEvent(this, g_event_input[j], g_event_label[j], this->batch_size, j);                        
             etloader->LoadTime(this, g_time_input[j], g_time_label[j], this->batch_size, j);           
-        }        
+            etloader->LoadValue(this, g_value_input[j], g_value_label[j], this->batch_size, j);           
+	}        
         for (unsigned i = 0; i < this->batch_size; ++i)
             cursors[i].second += bptt;           
     }
@@ -159,8 +164,10 @@ public:
                           IMatrix<mode, Dtype>* g_last_hidden,
                           IMatrix<mode, Dtype>* g_event_input, 
                           IMatrix<mode, Dtype>* g_time_input, 
+			  IMatrix<mode, Dtype>* g_value_input,
                           IMatrix<mode, Dtype>* g_event_label, 
-                          IMatrix<mode, Dtype>* g_time_label)
+                          IMatrix<mode, Dtype>* g_time_label,
+			  IMatrix<mode, Dtype>* g_value_label)
     {
         if (!this->initialized)
             this->StartNewEpoch();
@@ -223,7 +230,9 @@ public:
         }
         etloader->LoadEvent(this, g_event_input, g_event_label, cur_batch_size, 0);
         etloader->LoadTime(this, g_time_input, g_time_label, cur_batch_size, 0);
-        for (unsigned i = 0; i < cur_batch_size; ++i)
+        etloader->LoadValue(this, g_value_input, g_value_label, cur_batch_size, 0);
+ 
+	for (unsigned i = 0; i < cur_batch_size; ++i)
             cursors[i].second++;         
         return true;
     }
@@ -284,10 +293,29 @@ public:
         feat.CopyFrom(this->event_feat_cpu);
         label.CopyFrom(this->event_label_cpu);
     } 
+    void LoadValue(IDataLoader* d, IMatrix<mode, Dtype>* g_feat, IMatrix<mode, Dtype>* g_label, unsigned cur_batch_size, unsigned step)
+    {
+        auto& feat = g_feat->DenseDerived();
+        auto& label = g_label->DenseDerived();
+        
+        this->value_feat_cpu.Resize(cur_batch_size, 1);
+        this->value_label_cpu.Resize(cur_batch_size, 1);
+        
+        for (unsigned i = 0; i < cur_batch_size; ++i)
+        {
+            this->value_feat_cpu.data[i] = d->value_sequences[d->cursors[i].first][d->cursors[i].second + step];
+            this->value_label_cpu.data[i] = d->value_label_sequences[d->cursors[i].first][d->cursors[i].second + step];
+        }
+        
+        feat.CopyFrom(this->value_feat_cpu);
+        label.CopyFrom(this->value_label_cpu);
+    }
 
+ 
     virtual void LoadTime(IDataLoader* d, IMatrix<mode, Dtype>* g_feat, IMatrix<mode, Dtype>* g_label, unsigned cur_batch_size, unsigned step) = 0;
 
-    SparseMat<CPU, Dtype> event_feat_cpu, event_label_cpu;    
+    SparseMat<CPU, Dtype> event_feat_cpu, event_label_cpu; 
+    DenseMat<CPU, Dtype> value_feat_cpu, value_label_cpu;    
 };
 
 template<MatMode mode>

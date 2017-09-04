@@ -9,12 +9,16 @@ template<MatMode mode>
 inline void InitGraphData(std::vector< IMatrix<mode, Dtype>* >& g_event_input, 
                    std::vector< IMatrix<mode, Dtype>* >& g_event_label, 
                    std::vector< IMatrix<mode, Dtype>* >& g_time_input, 
-                   std::vector< IMatrix<mode, Dtype>* >& g_time_label)
+                   std::vector< IMatrix<mode, Dtype>* >& g_time_label,
+		   std::vector< IMatrix<mode, Dtype>* >& g_value_input,
+		   std::vector< IMatrix<mode, Dtype>* >& g_value_label)
 {
     g_event_input.clear();
     g_event_label.clear();
     g_time_input.clear();
     g_time_label.clear();
+    g_value_input.clear();
+    g_value_label.clear();
             
     for (unsigned i = 0; i < cfg::bptt; ++i)
     {
@@ -24,7 +28,9 @@ inline void InitGraphData(std::vector< IMatrix<mode, Dtype>* >& g_event_input,
             g_time_input.push_back(new SparseMat<mode, Dtype>());
         else
             g_time_input.push_back(new DenseMat<mode, Dtype>());
-        g_time_label.push_back(new DenseMat<mode, Dtype>());        
+        g_time_label.push_back(new DenseMat<mode, Dtype>());    
+	g_value_input.push_back(new SparseMat<mode, Dtype>());
+	g_value_label.push_back(new DenseMat<mode, Dtype>());    
     }
 }
 
@@ -50,6 +56,7 @@ inline void ProcessTimeDataLabel(std::vector<Dtype>& time_data, std::vector<Dtyp
             time_data[i] = time_data[i] - (int)(time_data[i] / cfg::T) * cfg::T;
     }
 }
+
 
 template<typename data_type>
 inline void LoadRaw(const char* filename, std::vector< std::vector<data_type> >& raw_data, int max_seq_num)
@@ -101,7 +108,8 @@ template<Phase phase>
 inline void Insert2Loader(DataLoader<phase>* dataset, 
                           std::vector< std::vector<int> >& raw_event_data, 
                           std::vector< std::vector<Dtype> >& raw_time_data, 
-                          size_t min_len)
+                          std::vector< std::vector<Dtype> >& raw_value_data,
+			  size_t min_len)
 {
     std::vector<Dtype> time_data;
     for (size_t i = 0; i < raw_event_data.size(); ++i)
@@ -118,13 +126,15 @@ inline void Insert2Loader(DataLoader<phase>* dataset,
         dataset->InsertSequence(raw_event_data[i].data(), 
                                 time_data.data(), 
                                 time_label.data() + 1, 
-                                raw_event_data[i].size());
+                                raw_value_data[i].data(),
+				raw_event_data[i].size());
 
         if (phase == TEST && i == 0 && cfg::has_eval)
         {
             val_data->InsertSequence(raw_event_data[i].data(),
                                      time_data.data(),
                                      time_label.data() + 1,
+				     raw_value_data[i].data(),
                                      raw_event_data[i].size());
         }
     }
@@ -135,11 +145,17 @@ inline void LoadDataFromFile()
 	std::vector< std::vector<int> > raw_event_train, raw_event_test;
     std::vector< std::vector<Dtype> > raw_time_train, raw_time_test;
 
+    std::vector< std::vector<Dtype> > raw_value_train, raw_value_test;
+	
+	
+
     std::cerr << "loading data..." << std::endl;
     assert(cfg::f_time_prefix && cfg::f_event_prefix);   
 
     LoadRaw(fmt::sprintf("%s-train.txt", cfg::f_event_prefix).c_str(), raw_event_train, -1);
     LoadRaw(fmt::sprintf("%s-train.txt", cfg::f_time_prefix).c_str(), raw_time_train, -1);
+    LoadRaw(fmt::sprintf("%s-train.txt", cfg::f_value_prefix).c_str(), raw_value_train, -1);
+    
     //LoadRaw(fmt::sprintf("%s-train.txt", cfg::f_event_prefix).c_str(), raw_event_train, cfg::test_top);
     //LoadRaw(fmt::sprintf("%s-train.txt", cfg::f_time_prefix).c_str(), raw_time_train, cfg::test_top);
 
@@ -147,9 +163,16 @@ inline void LoadDataFromFile()
     //LoadRaw(fmt::sprintf("%s-train.txt", cfg::f_time_prefix).c_str(), raw_time_test, cfg::test_top);
     LoadRaw(fmt::sprintf("%s-test.txt", cfg::f_event_prefix).c_str(), raw_event_test, cfg::test_top);
     LoadRaw(fmt::sprintf("%s-test.txt", cfg::f_time_prefix).c_str(), raw_time_test, cfg::test_top);
-
+    LoadRaw(fmt::sprintf("%s-test.txt", cfg::f_value_prefix).c_str(), raw_value_test, cfg::test_top);
+    
     assert(raw_event_train.size() == raw_time_train.size());
     assert(raw_event_test.size() == raw_time_test.size());
+    
+
+    std::cerr << "et" << raw_event_train.size() << std::endl;
+    std::cerr << "ete" << raw_event_test.size() << std::endl;
+    std::cerr << "tt" << raw_time_train.size() << std::endl;
+    std::cerr << "tte" << raw_time_test.size() << std::endl;
 
     size_t num_events = GetNumEvents(raw_event_train, raw_event_test);
     std::cerr << "num events: " << num_events << std::endl;
@@ -157,8 +180,8 @@ inline void LoadDataFromFile()
     test_data = new DataLoader<TEST>(num_events, cfg::batch_size);
     val_data = new DataLoader<TEST>(num_events, 1);
 
-    Insert2Loader(train_data, raw_event_train, raw_time_train, cfg::bptt);
-    Insert2Loader(test_data, raw_event_test, raw_time_test, 1);
+    Insert2Loader(train_data, raw_event_train, raw_time_train, raw_value_train, cfg::bptt);
+    Insert2Loader(test_data, raw_event_test, raw_time_test, raw_value_test, 1);
 
     std::cerr << "#train: " << train_data->num_samples << " #test: " << test_data->num_samples << std::endl;
     if (cfg::has_eval)

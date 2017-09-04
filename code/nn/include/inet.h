@@ -34,7 +34,7 @@ public:
         initialized = false;
         g_last_hidden_train = new DenseMat<mode, Dtype>();
         g_last_hidden_test = new DenseMat<mode, Dtype>();
-		InitGraphData(g_event_input, g_event_label, g_time_input, g_time_label);
+		InitGraphData(g_event_input, g_event_label, g_time_input, g_time_label, g_value_input, g_value_label);
         learner = new MomentumSGDLearner<mode, Dtype>(&model, cfg::lr, cfg::momentum, cfg::l2_penalty);
 	}
 
@@ -63,8 +63,10 @@ public:
                                   g_last_hidden_test, 
                                   g_event_input[0], 
                                   g_time_input[0], 
-                                  g_event_label[0], 
-                                  g_time_label[0]))
+                                  g_value_input[0],
+				  g_event_label[0], 
+                                  g_time_label[0],
+				  g_value_label[0]))
         {                        
             net_test.FeedForward(test_dict, TEST);
             auto loss_map = net_test.GetLoss();
@@ -130,9 +132,11 @@ public:
                                       cfg::bptt, 
             	                      g_last_hidden_train, 
                 	                  g_event_input, 
-                    	              g_time_input, 
+                    	              g_time_input,
+				      g_value_input, 
                         	          g_event_label, 
-                            	      g_time_label);
+                            	      g_time_label,
+				      g_value_label);
         
         	net_train.FeedForward(train_dict, TRAIN);
         	auto loss_map = net_train.GetLoss();
@@ -155,7 +159,7 @@ public:
     Model<mode, Dtype> model;
     MomentumSGDLearner<mode, Dtype>* learner;
 
-	std::vector< IMatrix<mode, Dtype>* > g_event_input, g_event_label, g_time_input, g_time_label;	
+	std::vector< IMatrix<mode, Dtype>* > g_event_input, g_event_label, g_time_input, g_time_label, g_value_input, g_value_label;	
 	std::map<std::string, IMatrix<mode, Dtype>* > train_dict, test_dict;
     IEventTimeLoader<mode>* etloader;
 

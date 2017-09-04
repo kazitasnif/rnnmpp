@@ -11,6 +11,8 @@
 #include "time_net.h"
 #include "joint_net.h"
 #include "event_net.h"
+#include "value_net.h"
+#include "joint_value_net.h"
 
 const MatMode mode = CPU;
 
@@ -22,7 +24,8 @@ void Work()
     if (cfg::unix_time)
         etloader = new UnixTimeLoader<mode>();
     else 
-        etloader = new SingleTimeLoader<mode>();
+        std::cerr << "single time loader" << std::endl;
+	etloader = new SingleTimeLoader<mode>();
     switch (cfg::net_type)
     {
         case NetType::TIME:
@@ -34,7 +37,13 @@ void Work()
         case NetType::EVENT:
             net = new EventNet<mode, Dtype>(etloader);
             break;
-        default:
+        case NetType::VALUE:
+	    net = new ValueNet<mode, Dtype>(etloader);
+	    break;
+	case NetType::JOINT_VALUE:
+	    net = new JointValueNet<mode, Dtype>(etloader); 
+	    break;
+	default:
             std::cerr << "unsupported nettype" << std::endl;
             return;
             break;

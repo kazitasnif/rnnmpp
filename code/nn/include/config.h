@@ -11,7 +11,9 @@ enum class NetType
 {
     TIME = 0,
     EVENT = 1,
-    JOINT = 2
+    JOINT = 2,
+    VALUE = 3,
+    JOINT_VALUE = 4
 };
 
 enum class LossType
@@ -34,6 +36,7 @@ struct cfg
     static unsigned report_interval; 
     static unsigned save_interval; 
     static unsigned time_dim;
+    static unsigned value_dim;
     static std::map<char, int> field_dim;
     static NetType net_type;
     static LossType loss_type;
@@ -46,7 +49,7 @@ struct cfg
     static Dtype T;
     static Dtype time_scale;
     static bool save_eval, has_eval, unix_time, gru, use_history;
-    static const char *f_time_prefix, *f_event_prefix, *save_dir;
+    static const char *f_time_prefix, *f_event_prefix, *f_value_prefix, *save_dir;
     static std::string unix_str;
     
     static void LoadParams(const int argc, const char** argv)
@@ -63,7 +66,12 @@ struct cfg
         {
             if (strcmp(argv[i], "-time") == 0)
                 f_time_prefix = argv[i + 1];
-            if (strcmp(argv[i], "-mode") == 0)
+            
+ 	    if (strcmp(argv[i], "-value") == 0)
+                f_value_prefix = argv[i + 1];
+        
+
+	    if (strcmp(argv[i], "-mode") == 0)
 		    {
 		        if (strcmp(argv[i + 1], "CPU") == 0)
 		            device_type = CPU;
@@ -193,6 +201,7 @@ int cfg::dev_id = 0;
 int cfg::iter = 0;
 unsigned cfg::bptt = 3;
 unsigned cfg::time_dim = 1;
+unsigned cfg::value_dim = 1;
 unsigned cfg::n_hidden = 256;
 unsigned cfg::n_embed = 128;
 unsigned cfg::batch_size = 50;
@@ -216,6 +225,7 @@ bool cfg::has_eval = false;
 bool cfg::unix_time = false;
 const char* cfg::f_time_prefix = nullptr;
 const char* cfg::f_event_prefix = nullptr;
+const char* cfg::f_value_prefix = nullptr;
 std::string cfg::unix_str = "";
 const char* cfg::save_dir = "./saved";
 NetType cfg::net_type = NetType::TIME;
