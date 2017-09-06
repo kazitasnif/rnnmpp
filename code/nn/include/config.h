@@ -88,7 +88,11 @@ struct cfg
                     net_type = NetType::EVENT;
                 else if (strcmp(argv[i + 1], "joint") == 0)
                     net_type = NetType::JOINT;
-                else throw "unknown net type"; 
+                else if (strcmp(argv[i + 1], "value") == 0)
+		    net_type = NetType::VALUE;
+		else if (strcmp(argv[i + 1], "joint_value") == 0)
+		    net_type = NetType::JOINT_VALUE;
+		else throw "unknown net type"; 
                 std::cerr << "net_type = " << argv[i + 1] << std::endl;
             }
             if (strcmp(argv[i], "-loss") == 0)
@@ -114,12 +118,12 @@ struct cfg
                 gru = (bool)atoi(argv[i + 1]); 
             if (strcmp(argv[i], "-unix_str") == 0)
                 unix_str = std::string(argv[i + 1]); 
-		    if (strcmp(argv[i], "-event") == 0)
-		        f_event_prefix = argv[i + 1];
+	    if (strcmp(argv[i], "-event") == 0)
+		f_event_prefix = argv[i + 1];
             if (strcmp(argv[i], "-t_scale") == 0)
                 time_scale = atof(argv[i + 1]);
-		    if (strcmp(argv[i], "-lr") == 0)
-		        lr = atof(argv[i + 1]);
+	    if (strcmp(argv[i], "-lr") == 0)
+		lr = atof(argv[i + 1]);
             if (strcmp(argv[i], "-T") == 0)
                 T = atof(argv[i + 1]);
             if (strcmp(argv[i], "-lambda") == 0)
@@ -128,14 +132,14 @@ struct cfg
                 bptt = atoi(argv[i + 1]);                                    
             if (strcmp(argv[i], "-cur_iter") == 0)
                 iter = atoi(argv[i + 1]);
-		    if (strcmp(argv[i], "-hidden") == 0)
-			    n_hidden = atoi(argv[i + 1]);
-		    if (strcmp(argv[i], "-embed") == 0)
-			    n_embed = atoi(argv[i + 1]);       
+	    if (strcmp(argv[i], "-hidden") == 0)
+		n_hidden = atoi(argv[i + 1]);
+	    if (strcmp(argv[i], "-embed") == 0)
+	        n_embed = atoi(argv[i + 1]);       
             if (strcmp(argv[i], "-test_top") == 0)
                 test_top = atoi(argv[i + 1]);             
-		    if (strcmp(argv[i], "-b") == 0)
-    			batch_size = atoi(argv[i + 1]);
+	    if (strcmp(argv[i], "-b") == 0)
+    	        batch_size = atoi(argv[i + 1]);
             if (strcmp(argv[i], "-h2") == 0)
                 n_h2 = atoi(argv[i + 1]);
     		if (strcmp(argv[i], "-maxe") == 0)
