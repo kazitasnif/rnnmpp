@@ -304,7 +304,7 @@ public:
         for (unsigned i = 0; i < cur_batch_size; ++i)
         {
             this->value_feat_cpu.data[i] = d->value_sequences[d->cursors[i].first][d->cursors[i].second + step];
-            this->value_label_cpu.data[i] = d->value_label_sequences[d->cursors[i].first][d->cursors[i].second + step];
+            this->value_label_cpu.data[i] = d->value_label_sequences[d->cursors[i].first][d->cursors[i].second + step + 1];
         }
         
         feat.CopyFrom(this->value_feat_cpu);

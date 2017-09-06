@@ -140,7 +140,7 @@ public:
         // local reset_gate = nn.Sigmoid()(new_input_sum(input_size_L, x, prev_h))
         auto* reset_linear = AddRecur(fmt::sprintf("reset_linear_%d", time_step), 
                                       gnn, last_hidden_layer, event_feat, time_feat, 
-                                      param_dict["w_h2reset"], param_dict["w_event2update"], param_dict["w_time2reset"]);         
+                                      param_dict["w_h2reset"], param_dict["w_event2reset"], param_dict["w_time2reset"]);         
         auto* reset_gate = cl<SigmoidLayer>(gnn, {reset_linear});
 
         // local gated_hidden = nn.CMulTable()({reset_gate, prev_h})

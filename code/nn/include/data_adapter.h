@@ -29,7 +29,7 @@ inline void InitGraphData(std::vector< IMatrix<mode, Dtype>* >& g_event_input,
         else
             g_time_input.push_back(new DenseMat<mode, Dtype>());
         g_time_label.push_back(new DenseMat<mode, Dtype>());    
-	g_value_input.push_back(new SparseMat<mode, Dtype>());
+	g_value_input.push_back(new DenseMat<mode, Dtype>());
 	g_value_label.push_back(new DenseMat<mode, Dtype>());    
     }
 }
