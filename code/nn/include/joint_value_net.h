@@ -38,21 +38,30 @@ public:
 	virtual void PrintTrainBatchResults(std::map<std::string, Dtype>& loss_map) 
 	{
 		Dtype rmse = 0.0, mae = 0.0, nll = 0.0, err_cnt = 0.0, intnll = 0.0;
+		Dtype val_mae = 0.0, val_rmse = 0.0;
 		for (unsigned i = 0; i < cfg::bptt; ++i)
         {
             mae += loss_map[fmt::sprintf("mae_%d", i)];
+	    std::cerr << "mae: " << mae << std::endl;
             rmse += loss_map[fmt::sprintf("mse_%d", i)];
-        	nll += loss_map[fmt::sprintf("nll_%d", i)]; 
+	    std::cerr << "rmse: " << rmse << std::endl;
+            val_mae += loss_map[fmt::sprintf("val_mae_%d", i)];
+            val_rmse += loss_map[fmt::sprintf("val_mse_%d", i)];
+        	
+	    nll += loss_map[fmt::sprintf("nll_%d", i)]; 
             err_cnt += loss_map[fmt::sprintf("err_cnt_%d", i)]; 
             if (cfg::loss_type == LossType::INTENSITY)
                 intnll +=  loss_map[fmt::sprintf("intnll_%d", i)]; 
         }
         rmse = sqrt(rmse / cfg::bptt / cfg::batch_size);
 		mae /= cfg::bptt * cfg::batch_size;
-		nll /= cfg::bptt * train_data->batch_size;
+	val_rmse = sqrt(val_rmse / cfg::bptt / cfg::batch_size);
+		val_mae /= cfg::bptt * cfg::batch_size;
+		
+	nll /= cfg::bptt * train_data->batch_size;
         err_cnt /= cfg::bptt * train_data->batch_size;
         intnll /= cfg::bptt * cfg::batch_size;
-        std::cerr << fmt::sprintf("train iter=%d\tmae: %.4f\trmse: %.4f\tnll: %.4f\terr_rate: %.4f", cfg::iter, mae, rmse, nll, err_cnt);
+        std::cerr << fmt::sprintf("train iter=%d\tmae: %.4f\trmse: %.4f\tvmae: %.4f\tvrmse: %.4f\tnll: %.4f\terr_rate: %.4f", cfg::iter, mae, rmse, val_mae, val_rmse,  nll, err_cnt);
         if (cfg::loss_type == LossType::INTENSITY)
             std::cerr << fmt::sprintf("\tintnll: %.4f", intnll);
         std::cerr << std::endl;
@@ -61,11 +70,15 @@ public:
 	virtual void PrintTestResults(DataLoader<TEST>* dataset, std::map<std::string, Dtype>& loss_map) 
 	{
 		Dtype rmse = loss_map["mse_0"], mae = loss_map["mae_0"], nll = loss_map["nll_0"];
+		Dtype val_rmse = loss_map["val_mse_0"], val_mae = loss_map["val_mae_0"];
 		rmse = sqrt(rmse / dataset->num_samples);
+		val_rmse = sqrt(val_rmse / dataset->num_samples);
+		val_mae /= dataset -> num_samples;
 		mae /= dataset->num_samples;
 		nll /= dataset->num_samples;
+		
         Dtype err_cnt = loss_map["err_cnt_0"] / dataset->num_samples;
-        std::cerr << fmt::sprintf("test_mae: %.6f\ttest_rmse: %.6f\ttest_nll: %.4f\ttest_err_rate: %.4f", mae, rmse, nll, err_cnt);
+        std::cerr << fmt::sprintf("test_mae: %.6f\ttest_rmse: %.6f\ttest_nll: %.4f\ttest_err_rate: %.4f\ttest_val_rmse: %.4f\ttest_val_mae: %.4f", mae, rmse, nll, err_cnt,val_rmse,val_mae);
 
         if (cfg::loss_type == LossType::INTENSITY)
         {
@@ -247,8 +260,8 @@ public:
             cl< ABSCriterionLayer >(fmt::sprintf("mae_%d", time_step), gnn, {dur_pred, dur_label_layer}, PropErr::N);
         }
         
-		cl< MSECriterionLayer >(fmt::sprintf("mse_%d", time_step), gnn, {value_out_layer, value_label_layer}, PropErr::N);
-                cl< ABSCriterionLayer >(fmt::sprintf("mae_%d", time_step), gnn, {value_out_layer, value_label_layer}, PropErr::N);
+		cl< MSECriterionLayer >(fmt::sprintf("val_mse_%d", time_step), gnn, {value_out_layer, value_label_layer}, PropErr::N);
+                cl< ABSCriterionLayer >(fmt::sprintf("val_mae_%d", time_step), gnn, {value_out_layer, value_label_layer}, PropErr::N);
       
 		return recurrent_output; 
 	}

@@ -69,6 +69,9 @@ public:
     
     inline void InsertLayer(ILayer<mode, Dtype>* layer, std::vector< ILayer<mode, Dtype>* > operands)
     {
+	std::cerr << "debug" << std::endl;
+	std::cerr << layer->name << std::endl;
+	std::cerr << layer_dict.count(layer -> name) << std::endl;
         assert(layer_dict.count(layer->name) == 0);
         layer_dict[layer->name] = layer;
         name_idx_map[layer->name] = ordered_layers.size();

@@ -41,6 +41,7 @@ void Work()
 	    net = new ValueNet<mode, Dtype>(etloader);
 	    break;
 	case NetType::JOINT_VALUE:
+	    std::cerr << "joint value net" << std::endl;
 	    net = new JointValueNet<mode, Dtype>(etloader); 
 	    break;
 	default:

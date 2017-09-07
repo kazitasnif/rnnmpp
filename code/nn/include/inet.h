@@ -58,7 +58,7 @@ public:
         FILE* fid = nullptr;
         if (save_prediction)
             fid = fopen(fmt::sprintf("%s/%s_pred_iter_%d.txt", cfg::save_dir, prefix, cfg::iter).c_str(), "w");
-        
+       	std::cerr << "file open" << std::endl; 
         while (dataset->NextBatch(etloader, 
                                   g_last_hidden_test, 
                                   g_event_input[0], 
@@ -68,9 +68,10 @@ public:
                                   g_time_label[0],
 				  g_value_label[0]))
         {                        
-            net_test.FeedForward(test_dict, TEST);
+            //std::cerr << "loaded batch" << std::endl;
+	    net_test.FeedForward(test_dict, TEST);
             auto loss_map = net_test.GetLoss();
-
+	    //std::cerr << "loss map" << std::endl;
             for (auto it = loss_map.begin(); it != loss_map.end(); ++it)
             {
                 if (test_loss_map.count(it->first) == 0)
@@ -114,7 +115,8 @@ public:
     	        std::cerr << "testing" << std::endl;
         	    
                 EvaluateDataset("test", test_data, true, test_loss_map);
-                PrintTestResults(test_data, test_loss_map);
+                std::cerr << "after evaluate dataset" << std::endl;
+		PrintTestResults(test_data, test_loss_map);
                 if (cfg::has_eval)
                 {
                     EvaluateDataset("val", val_data, cfg::save_eval, test_loss_map);

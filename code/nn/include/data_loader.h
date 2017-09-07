@@ -169,6 +169,7 @@ public:
                           IMatrix<mode, Dtype>* g_time_label,
 			  IMatrix<mode, Dtype>* g_value_label)
     {
+	//std::cerr << "inside nextbatch" << std::endl;
         if (!this->initialized)
             this->StartNewEpoch();
         unsigned delta_size = 0;                    
@@ -188,7 +189,7 @@ public:
 
         if (cur_batch_size == delta_size)
             return false;
-        
+       	//std::cerr << "before delta size" << std::endl; 
         if (delta_size)
         {
             auto& prev_hidden = g_last_hidden->DenseDerived();    
@@ -228,10 +229,12 @@ public:
                 prev_hidden.Resize(cur_batch_size - delta_size, prev_hidden.cols);
             cur_batch_size -= delta_size;
         }
+	//std::cerr<< " before loading events" << std::endl;
         etloader->LoadEvent(this, g_event_input, g_event_label, cur_batch_size, 0);
         etloader->LoadTime(this, g_time_input, g_time_label, cur_batch_size, 0);
-        etloader->LoadValue(this, g_value_input, g_value_label, cur_batch_size, 0);
- 
+        //std::cerr << "before loading value" << std::endl;
+	etloader->LoadValue(this, g_value_input, g_value_label, cur_batch_size, 0);
+ 	//std::cerr << "after loading value" << std::endl;
 	for (unsigned i = 0; i < cur_batch_size; ++i)
             cursors[i].second++;         
         return true;
@@ -301,10 +304,25 @@ public:
         this->value_feat_cpu.Resize(cur_batch_size, 1);
         this->value_label_cpu.Resize(cur_batch_size, 1);
         
+	/*std::cerr << "value sequences size: " << d->value_sequences.size() << std::endl;
+	std::cerr << "value label sequences size: " << d->value_label_sequences.size() << std::endl;
+
+	for(size_t i = 0; i < d->value_sequences.size(); i++){
+	  std::cerr << d->value_sequences[i].size()  << " ";
+	}
+	std::cerr << std::endl;
+	for(size_t i = 0; i < d->value_label_sequences.size(); i++){
+	  std::cerr << d->value_label_sequences[i].size()  << " ";
+	}
+	std::cerr << std::endl;*/
         for (unsigned i = 0; i < cur_batch_size; ++i)
         {
-            this->value_feat_cpu.data[i] = d->value_sequences[d->cursors[i].first][d->cursors[i].second + step];
-            this->value_label_cpu.data[i] = d->value_label_sequences[d->cursors[i].first][d->cursors[i].second + step + 1];
+	    	
+            //std::cerr << d->value_sequences[d->cursors[i].first][d->cursors[i].second + step] << " ";
+            //std::cerr << d->value_label_sequences[d->cursors[i].first][d->cursors[i].second + step + 1]<< std::endl;
+
+	    this->value_feat_cpu.data[i] = d->value_sequences[d->cursors[i].first][d->cursors[i].second + step];
+            this->value_label_cpu.data[i] = d->value_sequences[d->cursors[i].first][d->cursors[i].second + step + 1];
         }
         
         feat.CopyFrom(this->value_feat_cpu);
@@ -331,10 +349,11 @@ public:
         
         this->time_feat_cpu.Resize(cur_batch_size, 1);
         this->time_label_cpu.Resize(cur_batch_size, 1);
-        
+         
         for (unsigned i = 0; i < cur_batch_size; ++i)
         {
-            this->time_feat_cpu.data[i] = d->time_sequences[d->cursors[i].first][d->cursors[i].second + step];
+            
+	    this->time_feat_cpu.data[i] = d->time_sequences[d->cursors[i].first][d->cursors[i].second + step];
             this->time_label_cpu.data[i] = d->time_label_sequences[d->cursors[i].first][d->cursors[i].second + step];
         }
         

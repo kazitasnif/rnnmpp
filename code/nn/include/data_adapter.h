@@ -65,19 +65,23 @@ inline void LoadRaw(const char* filename, std::vector< std::vector<data_type> >&
     std::ifstream f_stream(filename);
     std::string read_buf;
     data_type d;
+    size_t count = 0;
+    std::cout << filename << std::endl;
     while (getline(f_stream, read_buf))
     {
-        std::stringstream ss(read_buf);
+	count++;
+	std::stringstream ss(read_buf);
         std::vector<data_type> cur_seq;
         cur_seq.clear();
         while (ss >> d)
         {
             cur_seq.push_back(d); 
         }
-        raw_data.push_back(cur_seq);
+	raw_data.push_back(cur_seq);
         if (max_seq_num >= 0 && raw_data.size() >= max_seq_num)
             break;
     }
+    std::cerr<< "count: " << count << std::endl;
 }
 
 inline size_t GetNumEvents(std::vector< std::vector<int> >& raw_event_train, 
@@ -108,7 +112,7 @@ template<Phase phase>
 inline void Insert2Loader(DataLoader<phase>* dataset, 
                           std::vector< std::vector<int> >& raw_event_data, 
                           std::vector< std::vector<Dtype> >& raw_time_data, 
-                          std::vector< std::vector<Dtype> >& raw_value_data,
+                          std::vector< std::vector<double> >& raw_value_data,
 			  size_t min_len)
 {
     std::vector<Dtype> time_data;
@@ -173,6 +177,7 @@ inline void LoadDataFromFile()
     std::cerr << "ete" << raw_event_test.size() << std::endl;
     std::cerr << "tt" << raw_time_train.size() << std::endl;
     std::cerr << "tte" << raw_time_test.size() << std::endl;
+    std::cerr<< "vt" << raw_value_train.size() << std::endl;
 
     size_t num_events = GetNumEvents(raw_event_train, raw_event_test);
     std::cerr << "num events: " << num_events << std::endl;
@@ -180,6 +185,7 @@ inline void LoadDataFromFile()
     test_data = new DataLoader<TEST>(num_events, cfg::batch_size);
     val_data = new DataLoader<TEST>(num_events, 1);
 
+    std::cerr << "before insert 2 loader" << std::endl;
     Insert2Loader(train_data, raw_event_train, raw_time_train, raw_value_train, cfg::bptt);
     Insert2Loader(test_data, raw_event_test, raw_time_test, raw_value_test, 1);
 
