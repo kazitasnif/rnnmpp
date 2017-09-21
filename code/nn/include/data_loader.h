@@ -29,6 +29,18 @@ public:
         cursors.resize(batch_size);
         index_pool.clear();
     } 
+    
+
+    inline void InsertSequence(int* event_seq, Dtype* time_seq, Dtype* time_label, int seq_len)
+    {
+        num_samples += seq_len - 1;
+        InsertSequence(event_seq, event_sequences, seq_len);
+        InsertSequence(time_seq, time_sequences, seq_len); 
+        InsertSequence(time_label, time_label_sequences, seq_len - 1); 
+    }
+    
+
+
     inline void InsertSequence(int* event_seq, Dtype* time_seq, Dtype* time_label, Dtype* value_seq 
 	, int seq_len)
     {
@@ -58,7 +70,12 @@ public:
             index_pool.pop_front();
         }
     }
-    
+    virtual void BeforeForwardSeq(unsigned seq_num){
+ 	//index_pool.clear();
+	cursors.resize(1);
+	cursors[0].first = seq_num;
+	cursors[0].second = 0;
+    } 
     size_t num_samples, num_events, batch_size; 
 
     void ReloadSlot(unsigned batch_idx)    
@@ -142,7 +159,9 @@ public:
         {                                  
             etloader->LoadEvent(this, g_event_input[j], g_event_label[j], this->batch_size, j);                        
             etloader->LoadTime(this, g_time_input[j], g_time_label[j], this->batch_size, j);           
-            etloader->LoadValue(this, g_value_input[j], g_value_label[j], this->batch_size, j);           
+            if(cfg::has_value){
+	      etloader->LoadValue(this, g_value_input[j], g_value_label[j], this->batch_size, j);           
+	    }
 	}        
         for (unsigned i = 0; i < this->batch_size; ++i)
             cursors[i].second += bptt;           
@@ -233,12 +252,39 @@ public:
         etloader->LoadEvent(this, g_event_input, g_event_label, cur_batch_size, 0);
         etloader->LoadTime(this, g_time_input, g_time_label, cur_batch_size, 0);
         //std::cerr << "before loading value" << std::endl;
-	etloader->LoadValue(this, g_value_input, g_value_label, cur_batch_size, 0);
- 	//std::cerr << "after loading value" << std::endl;
+	if(cfg::has_value){
+	  etloader->LoadValue(this, g_value_input, g_value_label, cur_batch_size, 0);
+ 	}
+	//std::cerr << "after loading value" << std::endl;
 	for (unsigned i = 0; i < cur_batch_size; ++i)
             cursors[i].second++;         
         return true;
     }
+     
+    template<MatMode mode>
+    inline bool ForwardSeq(IEventTimeLoader<mode>* etloader, 
+                          IMatrix<mode, Dtype>* g_last_hidden,
+                          IMatrix<mode, Dtype>* g_event_input, 
+                          IMatrix<mode, Dtype>* g_time_input, 
+			  IMatrix<mode, Dtype>* g_value_input,
+                          IMatrix<mode, Dtype>* g_event_label, 
+                          IMatrix<mode, Dtype>* g_time_label,
+			  IMatrix<mode, Dtype>* g_value_label
+			  )
+    {
+            if (cursors[0].second + 1 >= event_sequences[cursors[0].first].size()) return false;
+            //std::cerr<< " before loading events" << std::endl;
+            etloader->LoadEvent(this, g_event_input, g_event_label, 1, 0);
+            etloader->LoadTime(this, g_time_input, g_time_label, 1, 0);
+            //std::cerr << "before loading value" << std::endl;
+	    if(cfg::has_value){
+	      etloader->LoadValue(this, g_value_input, g_value_label, 1, 0);
+  	    }
+	    //std::cerr << "after loading value" << std::endl;
+            cursors[0].second++;         
+            return true;
+    }
+
 
     virtual void StartNewEpoch() override
     {                
@@ -256,7 +302,17 @@ public:
 
         cur_batch_size = batch_size;        
     }
-    
+    /*virtual void BeforeForwardSeq(unsigned seq_num) override
+    {
+	this -> initialized = true;
+        IDataLoader::BeforeForwardSeq(seq_num);
+	if (available.size() != event_sequences.size())
+            available.resize(event_sequences.size());
+        
+        for (unsigned i = 0; i < available.size(); ++i)
+            available[i] = false;
+	cur_batch_size = 1;	
+    } */
 protected:    
     unsigned cur_batch_size;
     std::vector<bool> available;             

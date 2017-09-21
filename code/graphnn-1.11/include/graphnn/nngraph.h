@@ -86,7 +86,8 @@ public:
     template<MatMode anotherMode>
     void GetState(std::string layer_name, DenseMat<anotherMode, Dtype>& dst)
     {
-        assert(layer_dict.count(layer_name));
+        //std::cerr << layer_name << std::endl;
+	assert(layer_dict.count(layer_name));
         auto& output = layer_dict[layer_name]->state->DenseDerived();
         dst.CopyFrom(output);
     }

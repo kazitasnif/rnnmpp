@@ -20,9 +20,16 @@ public:
 			virtual void UpdateOutput(std::vector< ILayer<mode, Dtype>* >& operands, Phase phase) override
             {		
                 auto& node_diff = this->grad->DenseDerived();						
-                node_diff.GeaM(1.0, Trans::N, operands[0]->state->DenseDerived(), -1.0, Trans::N, operands[1]->state->DenseDerived());
+                //std::cerr << "operand 0" << std::endl;
+		//operands[0] -> state -> Print2Screen();
+		//std::cerr << "operand 1" << std::endl;
+		//operands[1] -> state -> Print2Screen();
+		
+		node_diff.GeaM(1.0, Trans::N, operands[0]->state->DenseDerived(), -1.0, Trans::N, operands[1]->state->DenseDerived());
                 Dtype norm2 = node_diff.Norm2();
-                this->loss = norm2 * norm2;
+		//std::cerr << "norm2" << std::endl;
+                //std::cerr << norm2 << std::endl; 
+		this->loss = norm2 * norm2;
                 
                 if (this->properr == PropErr::T)
                     node_diff.Scale(2.0 * this->lambda / operands[1]->state->rows);

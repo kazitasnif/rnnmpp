@@ -42,6 +42,8 @@ public:
 		for (unsigned i = 0; i < cfg::bptt; ++i)
         {
             mae += loss_map[fmt::sprintf("mae_%d", i)];
+	    std:: cerr << loss_map[fmt::sprintf("mae_%d", i)] << std::endl;
+	    std:: cerr << loss_map[fmt::sprintf("val_mae_%d", i)] << std::endl;
 	    std::cerr << "mae: " << mae << std::endl;
             rmse += loss_map[fmt::sprintf("mse_%d", i)];
 	    std::cerr << "rmse: " << rmse << std::endl;
@@ -70,6 +72,13 @@ public:
 	virtual void PrintTestResults(DataLoader<TEST>* dataset, std::map<std::string, Dtype>& loss_map) 
 	{
 		Dtype rmse = loss_map["mse_0"], mae = loss_map["mae_0"], nll = loss_map["nll_0"];
+		std::cout << "rmse: " << rmse << std::endl;
+		std::cout << "mae: " << mae << std::endl;
+		if(cfg::loss_type == LossType::INTENSITY){
+		  std::cout << "intnll" << loss_map["intnll_0"] << std::endl;
+		}
+		std::cout << "nll: " << nll << std::endl;
+	 
 		Dtype val_rmse = loss_map["val_mse_0"], val_mae = loss_map["val_mae_0"];
 		rmse = sqrt(rmse / dataset->num_samples);
 		val_rmse = sqrt(val_rmse / dataset->num_samples);
@@ -245,7 +254,8 @@ public:
             cl< ABSCriterionLayer >(fmt::sprintf("mae_%d", time_step), gnn, {time_out_layer, dur_label_layer}, PropErr::N);
         }
         if (cfg::loss_type == LossType::INTENSITY)
-        {   
+        {  
+	    std::cerr << "intensity losstype" << std::endl; 
             LinearParam<mode, Dtype>* w = dynamic_cast<LinearParam<mode, Dtype>*>(param_dict["w_lambdat"]);
             cl< IntensityNllCriterionLayer >(fmt::sprintf("intnll_%d", time_step), 
                                              gnn, 

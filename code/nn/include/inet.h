@@ -34,7 +34,7 @@ public:
         initialized = false;
         g_last_hidden_train = new DenseMat<mode, Dtype>();
         g_last_hidden_test = new DenseMat<mode, Dtype>();
-		InitGraphData(g_event_input, g_event_label, g_time_input, g_time_label, g_value_input, g_value_label);
+	InitGraphData(g_event_input, g_event_label, g_time_input, g_time_label, g_value_input, g_value_label);
         learner = new MomentumSGDLearner<mode, Dtype>(&model, cfg::lr, cfg::momentum, cfg::l2_penalty);
 	}
 
@@ -46,7 +46,63 @@ public:
         InitNet(net_test, model.all_params, 1);
         initialized = true;
     }
+    /*llh*/
 
+    double llh(DataLoader<TEST>* dl, std::map<std::string, Dtype>& llh_map, unsigned seq_num){
+        double ret = 0;
+        auto& last_hidden_test = g_last_hidden_test->DenseDerived();
+        last_hidden_test.Zeros(1, cfg::n_hidden);
+	//LinkTestData(); 
+	llh_map.clear();
+        dl -> BeforeForwardSeq(seq_num);
+	std::cerr << "after beforeForwardSeq" << std::endl;
+		
+	//InitGraphData(g_event_input, g_event_label, g_time_input, g_time_label, g_value_input, g_value_label);
+	/*using the NextBatch code for forwarding a sequence with batch size = 1 */  
+	unsigned iter = 0;
+	/*for(size_t i = 0; i < dl -> event_sequences.size(); i++){
+	 std::cerr << dl -> event_sequences[i].size() << " ";
+	}
+	std::cerr << std::endl;
+	std::cerr << "seq size: " << dl -> event_sequences[seq_num].size() << std::endl;*/
+	while (dl->ForwardSeq(etloader, 
+                                  g_last_hidden_test, 
+                                  g_event_input[0], 
+                                  g_time_input[0], 
+                                  g_value_input[0],
+				  g_event_label[0], 
+                                  g_time_label[0],
+				  g_value_label[0]))
+        {                        
+            //std::cerr << "loaded batch in llh" << std::endl;
+	    //g_time_label[0] -> Print2Screen();
+	    //g_time_input[0] -> Print2Screen();
+	    iter++;
+	    //std::cerr << "iter: " << iter << std::endl;
+	    net_test.FeedForward(test_dict, TEST);
+	    //std::cerr << "feed forward" << std::endl;
+            auto loss_map = net_test.GetLoss();
+	    //std::cerr << "loss map in llh" << std::endl;
+            for (auto it = loss_map.begin(); it != loss_map.end(); ++it)
+            {
+               
+		if (llh_map.count(it->first) == 0)
+                    llh_map[it->first] = 0.0;
+		//std::cerr << "debugging inside evaluate dataset" << std::endl;
+		//std::cerr << it -> second << std::endl;
+                ret += -1.0 * it -> second;
+		llh_map[it->first] += -1.0 * it->second;
+            }
+	    //std::cerr << "ret: " << ret << std::endl;
+            if (cfg::bptt > 1)
+                net_test.GetState("recurrent_hidden_0", last_hidden_test);            
+        }
+	
+      	std::cerr << "ret: " << ret << std::endl;  	
+	//InitGraphData(g_event_input, g_event_label, g_time_input, g_time_label, g_value_input, g_value_label);
+      	return ret;
+
+    }
     void EvaluateDataset(const char* prefix, DataLoader<TEST>* dataset, bool save_prediction, std::map<std::string, Dtype>& test_loss_map)
     {
         auto& last_hidden_test = g_last_hidden_test->DenseDerived();
@@ -71,13 +127,19 @@ public:
             //std::cerr << "loaded batch" << std::endl;
 	    net_test.FeedForward(test_dict, TEST);
             auto loss_map = net_test.GetLoss();
-	    //std::cerr << "loss map" << std::endl;
             for (auto it = loss_map.begin(); it != loss_map.end(); ++it)
             {
                 if (test_loss_map.count(it->first) == 0)
                     test_loss_map[it->first] = 0.0;
+		//std::cerr << "debugging inside evaluate dataset" << std::endl;
+		//std::cerr << it -> first << " " << it -> second << std::endl;
                 test_loss_map[it->first] += it->second;
             }
+	    
+	    for(auto it = test_loss_map.begin(); it != test_loss_map.end(); ++it){
+		std::cerr << it -> first << " " << it -> second << std::endl;
+		
+	    }
             if (save_prediction)
                 WriteTestBatch(fid);
             if (cfg::bptt > 1)
@@ -86,7 +148,7 @@ public:
         if (save_prediction)
             fclose(fid);
     }
-
+    
 	void MainLoop()
 	{
         if (!initialized)
@@ -107,6 +169,7 @@ public:
         auto& last_hidden_train = g_last_hidden_train->DenseDerived();         
     	last_hidden_train.Zeros(cfg::batch_size, cfg::n_hidden);
     	std::map<std::string, Dtype> test_loss_map;
+	std::map<std::string, Dtype> llh_map;
 
     	for (; cfg::iter <= max_iter; ++cfg::iter)
     	{
@@ -115,8 +178,12 @@ public:
     	        std::cerr << "testing" << std::endl;
         	    
                 EvaluateDataset("test", test_data, true, test_loss_map);
-                std::cerr << "after evaluate dataset" << std::endl;
+                //std::cerr << "after evaluate dataset" << std::endl;
 		PrintTestResults(test_data, test_loss_map);
+		/*for(unsigned i = 0; i < test_data -> event_sequences.size(); i++){
+		  std::cout << "llh: " << llh(test_data, llh_map, i) << " ";
+		} */
+		std::cout << std::endl;
                 if (cfg::has_eval)
                 {
                     EvaluateDataset("val", val_data, cfg::save_eval, test_loss_map);

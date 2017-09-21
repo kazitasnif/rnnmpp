@@ -49,6 +49,7 @@ struct cfg
     static Dtype T;
     static Dtype time_scale;
     static bool save_eval, has_eval, unix_time, gru, use_history;
+    static bool has_value;
     static const char *f_time_prefix, *f_event_prefix, *f_value_prefix, *save_dir;
     static std::string unix_str;
     
@@ -88,10 +89,14 @@ struct cfg
                     net_type = NetType::EVENT;
                 else if (strcmp(argv[i + 1], "joint") == 0)
                     net_type = NetType::JOINT;
-                else if (strcmp(argv[i + 1], "value") == 0)
+                else if (strcmp(argv[i + 1], "value") == 0){
 		    net_type = NetType::VALUE;
-		else if (strcmp(argv[i + 1], "joint_value") == 0)
+		    has_value = true;
+		}
+		else if (strcmp(argv[i + 1], "joint_value") == 0){
 		    net_type = NetType::JOINT_VALUE;
+		    has_value = true;
+		}
 		else throw "unknown net type"; 
                 std::cerr << "net_type = " << argv[i + 1] << std::endl;
             }
@@ -223,6 +228,7 @@ Dtype cfg::l2_penalty = 0;
 Dtype cfg::momentum = 0;
 Dtype cfg::w_scale = 0.01;
 MatMode cfg::device_type = GPU;
+bool cfg::has_value = false;
 bool cfg::use_history = false;
 bool cfg::save_eval = false;
 bool cfg::has_eval = false;

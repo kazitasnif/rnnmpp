@@ -41,15 +41,18 @@ inline void ProcessTimeDataLabel(std::vector<Dtype>& time_data, std::vector<Dtyp
 		time_data.push_back(time_label[i]);
 
 	// we only predict the duration
-	for (int i = time_label.size() - 1; i >= 1; --i)
-        time_label[i] = cfg::time_scale * (time_label[i] - time_label[i - 1]);
-
+	for (int i = time_label.size() - 1; i >= 1; --i){
+          time_label[i] = cfg::time_scale * (time_label[i] - time_label[i - 1]);
+	  //time_label[i] = cfg::time_scale * time_label[i];
+	}
     if (cfg::unix_time)
         return;
     if (cfg::T == 0)
     {
-        for (int i = time_label.size() - 1; i >= 1; --i)
-            time_data[i] = time_data[i] - time_data[i - 1];
+        for (int i = time_label.size() - 1; i >= 1; --i){
+          time_data[i] = time_data[i] - time_data[i - 1];
+	  //time_data[i] = time_data[i];
+	}
     } else 
     {
         for (size_t i = 0; i < time_label.size(); ++i)
@@ -121,25 +124,44 @@ inline void Insert2Loader(DataLoader<phase>* dataset,
         assert(raw_event_data[i].size() == raw_time_data[i].size());
         auto& time_label = raw_time_data[i];
         ProcessTimeDataLabel(time_data, time_label);
-
+	/*std::cerr << "time label" << std::endl;
+	for(auto& l: time_label){
+	  std::cerr << l << " ";
+	}
+	std::cerr << std::endl;*/
         if (time_label.size() <= min_len)
         {
             std::cerr << "dropped short sequence in " << i << std::endl;
             continue;
         }
-        dataset->InsertSequence(raw_event_data[i].data(), 
+	if(cfg::has_value){
+          dataset->InsertSequence(raw_event_data[i].data(), 
                                 time_data.data(), 
                                 time_label.data() + 1, 
                                 raw_value_data[i].data(),
 				raw_event_data[i].size());
-
+	}else{
+	  dataset->InsertSequence(raw_event_data[i].data(), 
+                                time_data.data(), 
+                                time_label.data() + 1, 
+				raw_event_data[i].size());
+	}
         if (phase == TEST && i == 0 && cfg::has_eval)
         {
-            val_data->InsertSequence(raw_event_data[i].data(),
+	    if(cfg::has_value){
+              val_data->InsertSequence(raw_event_data[i].data(),
                                      time_data.data(),
                                      time_label.data() + 1,
 				     raw_value_data[i].data(),
                                      raw_event_data[i].size());
+	    }else{
+	      val_data->InsertSequence(raw_event_data[i].data(),
+                                     time_data.data(),
+                                     time_label.data() + 1,
+                                     raw_event_data[i].size());
+	   
+
+	    }
         }
     }
 }
@@ -158,8 +180,9 @@ inline void LoadDataFromFile()
 
     LoadRaw(fmt::sprintf("%s-train.txt", cfg::f_event_prefix).c_str(), raw_event_train, -1);
     LoadRaw(fmt::sprintf("%s-train.txt", cfg::f_time_prefix).c_str(), raw_time_train, -1);
-    LoadRaw(fmt::sprintf("%s-train.txt", cfg::f_value_prefix).c_str(), raw_value_train, -1);
-    
+    if(cfg::has_value){
+      LoadRaw(fmt::sprintf("%s-train.txt", cfg::f_value_prefix).c_str(), raw_value_train, -1);
+    }
     //LoadRaw(fmt::sprintf("%s-train.txt", cfg::f_event_prefix).c_str(), raw_event_train, cfg::test_top);
     //LoadRaw(fmt::sprintf("%s-train.txt", cfg::f_time_prefix).c_str(), raw_time_train, cfg::test_top);
 
@@ -167,8 +190,9 @@ inline void LoadDataFromFile()
     //LoadRaw(fmt::sprintf("%s-train.txt", cfg::f_time_prefix).c_str(), raw_time_test, cfg::test_top);
     LoadRaw(fmt::sprintf("%s-test.txt", cfg::f_event_prefix).c_str(), raw_event_test, cfg::test_top);
     LoadRaw(fmt::sprintf("%s-test.txt", cfg::f_time_prefix).c_str(), raw_time_test, cfg::test_top);
-    LoadRaw(fmt::sprintf("%s-test.txt", cfg::f_value_prefix).c_str(), raw_value_test, cfg::test_top);
-    
+    if(cfg::has_value){
+      LoadRaw(fmt::sprintf("%s-test.txt", cfg::f_value_prefix).c_str(), raw_value_test, cfg::test_top);
+    }
     assert(raw_event_train.size() == raw_time_train.size());
     assert(raw_event_test.size() == raw_time_test.size());
     

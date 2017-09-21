@@ -197,7 +197,7 @@ public:
 
 	    auto* value_out_layer = cl< ParamLayer >(fmt::sprintf("value_out_%d", time_step), gnn, {top_hidden}, {param_dict["w_value_out"]});
 	    
-        if (cfg::loss_type == LossType::MSE)
+        //if (cfg::loss_type == LossType::MSE)
         {
             cl< MSECriterionLayer >(fmt::sprintf("mse_%d", time_step), gnn, {value_out_layer, value_label_layer}, PropErr::N);
             cl< ABSCriterionLayer >(fmt::sprintf("mae_%d", time_step), gnn, {value_out_layer, value_label_layer}, PropErr::N);
@@ -231,10 +231,10 @@ public:
 
 	virtual void WriteTestBatch(FILE* fid) override
 	{           
-        this->net_test.GetState("intensity_0", buf);     
+        /*this->net_test.GetState("intensity_0", buf);     
         for (size_t i = 0; i < buf.rows; ++i)
             fprintf(fid, "%.6f\n",  buf.data[i]);
-        return;
+        return;*/
         /*
 		this->net_test.GetState("dur_pred_0", buf);
 		buf2.CopyFrom(this->g_time_label[0]->DenseDerived());
