@@ -64,6 +64,8 @@ void DurPredLayer<mode, Dtype>::UpdateOutput(std::vector< ILayer<mode, Dtype>* >
 		int_result.Axpy(1.0, buffer);
 
 		int_result.Scale(delta / 3.0);
+		//std::cerr << "int_result" << int_result.Print2Screen() << std::endl;
+						
 }
 
 

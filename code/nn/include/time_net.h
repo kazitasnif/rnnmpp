@@ -195,6 +195,7 @@ public:
 	    
         if (cfg::loss_type == LossType::MSE)
         {
+	    std::cerr  << "mse layer" << std::endl; 
             cl< MSECriterionLayer >(fmt::sprintf("mse_%d", time_step), gnn, {time_out_layer, dur_label_layer});
             cl< ABSCriterionLayer >(fmt::sprintf("mae_%d", time_step), gnn, {time_out_layer, dur_label_layer}, PropErr::N);
         }
@@ -215,7 +216,7 @@ public:
                 cl< ABSCriterionLayer >(fmt::sprintf("mae_%d", time_step), gnn, {dur_pred, dur_label_layer}, PropErr::N);
             }
             
-            auto* intensity_linear = cl< ParamLayer >(gnn, {top_hidden, dur_label_layer}, {param_dict["w_time_out"], param_dict["w_lambdat"]}, PropErr::N);
+            auto* intensity_linear = cl< ParamLayer >(gnn, {top_hidden, dur_label_layer}, {param_dict["w_time_out"], param_dict["w_lambdat"]}, PropErr::T);
             cl< ExpLayer >(fmt::sprintf("intensity_%d", time_step), gnn, {intensity_linear});
 
             

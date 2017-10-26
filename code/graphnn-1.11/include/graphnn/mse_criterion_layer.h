@@ -30,7 +30,11 @@ public:
 		//std::cerr << "norm2" << std::endl;
                 //std::cerr << norm2 << std::endl; 
 		this->loss = norm2 * norm2;
-                
+               	/*if(this->loss >= std::numeric_limits<double>::infinity()){
+		  std::cerr << "mse loss overflowed"  << std::endl;
+		  operands[0] -> state -> Print2Screen();
+		  operands[1] -> state -> Print2Screen();
+		}*/ 
                 if (this->properr == PropErr::T)
                     node_diff.Scale(2.0 * this->lambda / operands[1]->state->rows);
             }

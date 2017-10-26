@@ -5,6 +5,7 @@
 #include "dense_matrix.h"
 #include "sparse_matrix.h"
 #include "loss_func.h"
+#include <limits>
 
 template<MatMode mode, typename Dtype>
 class ClassNLLCriterionLayer : public ICriterionLayer<mode, Dtype>
@@ -31,9 +32,14 @@ public:
                 if (need_softmax)
                     top.Softmax();
                 auto& labels = operands[1]->state->SparseDerived();
-                
+                //top.Print2Screen(); 
                 this->loss = LossFunc<mode, Dtype>::GetLogLoss(top, labels);
-                
+                if(this->loss >= std::numeric_limits<double>::infinity() || this->loss <= -1.0 * std::numeric_limits<double>::infinity() 
+						|| !(this -> loss == this -> loss) ){
+		  std::cerr << "classnll loss overflowed or nan" << std::endl;
+		  top.Print2Screen();
+		  labels.Print2Screen();
+		} 
                 if (need_softmax)
                 {
                     top.Axpy(-1.0, labels); // calc grad

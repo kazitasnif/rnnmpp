@@ -64,6 +64,7 @@ inline void ProcessTimeDataLabel(std::vector<Dtype>& time_data, std::vector<Dtyp
 template<typename data_type>
 inline void LoadRaw(const char* filename, std::vector< std::vector<data_type> >& raw_data, int max_seq_num)
 {
+    std::cerr << filename << std::endl;
     raw_data.clear();
     std::ifstream f_stream(filename);
     std::string read_buf;
@@ -119,6 +120,15 @@ inline void Insert2Loader(DataLoader<phase>* dataset,
 			  size_t min_len)
 {
     std::vector<Dtype> time_data;
+    size_t tot_len = 0;
+    size_t greater_thousand = 0;
+    for(size_t i = 0; i < raw_event_data.size(); i++) {
+	if(raw_event_data[i].size() > 1000) {std::cerr << raw_event_data[i].size() << std::endl; greater_thousand++;}
+	tot_len += raw_event_data[i].size() - 1;
+    }
+    std::cerr << "raw event data size: " << raw_event_data.size() << std::endl;
+    std::cerr << "tot len: " << tot_len << std::endl;
+    std::cerr << "greater thousand: " << greater_thousand << std::endl;
     for (size_t i = 0; i < raw_event_data.size(); ++i)
     {
         assert(raw_event_data[i].size() == raw_time_data[i].size());
@@ -148,6 +158,7 @@ inline void Insert2Loader(DataLoader<phase>* dataset,
 	}
         if (phase == TEST && i == 0 && cfg::has_eval)
         {
+	    std::cerr << "phase test: " << std::endl;
 	    if(cfg::has_value){
               val_data->InsertSequence(raw_event_data[i].data(),
                                      time_data.data(),
@@ -189,6 +200,13 @@ inline void LoadDataFromFile()
     //LoadRaw(fmt::sprintf("%s-train.txt", cfg::f_event_prefix).c_str(), raw_event_test, cfg::test_top);    
     //LoadRaw(fmt::sprintf("%s-train.txt", cfg::f_time_prefix).c_str(), raw_time_test, cfg::test_top);
     LoadRaw(fmt::sprintf("%s-test.txt", cfg::f_event_prefix).c_str(), raw_event_test, cfg::test_top);
+    /*for(size_t i = 0; i < 100; i++){
+      for(size_t j = 0; j < raw_event_test[i].size(); j++){
+        std::cerr << raw_event_test[i][j] << " "; 
+      }
+      std::cerr << std::endl;
+    }*/
+   
     LoadRaw(fmt::sprintf("%s-test.txt", cfg::f_time_prefix).c_str(), raw_time_test, cfg::test_top);
     if(cfg::has_value){
       LoadRaw(fmt::sprintf("%s-test.txt", cfg::f_value_prefix).c_str(), raw_value_test, cfg::test_top);

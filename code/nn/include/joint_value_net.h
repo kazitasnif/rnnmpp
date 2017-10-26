@@ -270,8 +270,8 @@ public:
             cl< ABSCriterionLayer >(fmt::sprintf("mae_%d", time_step), gnn, {dur_pred, dur_label_layer}, PropErr::N);
         }
         
-		cl< MSECriterionLayer >(fmt::sprintf("val_mse_%d", time_step), gnn, {value_out_layer, value_label_layer}, PropErr::N);
-                cl< ABSCriterionLayer >(fmt::sprintf("val_mae_%d", time_step), gnn, {value_out_layer, value_label_layer}, PropErr::N);
+	cl< MSECriterionLayer >(fmt::sprintf("val_mse_%d", time_step), gnn, {value_out_layer, value_label_layer}, PropErr::T);
+        cl< ABSCriterionLayer >(fmt::sprintf("val_mae_%d", time_step), gnn, {value_out_layer, value_label_layer}, PropErr::N);
       
 		return recurrent_output; 
 	}

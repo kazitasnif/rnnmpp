@@ -44,7 +44,7 @@ public:
         rmse = sqrt(rmse / cfg::bptt / cfg::batch_size);
 		mae /= cfg::bptt * cfg::batch_size;
         //intnll /= cfg::bptt * cfg::batch_size;
-		std::cerr << fmt::sprintf("train iter=%d\tmae: %.4f\trmse: %.4f", cfg::iter, mae, rmse);
+		std::cerr << fmt::sprintf("train iter=%d\tmae: %.6f\trmse: %.6f", cfg::iter, mae, rmse);
         /*if (cfg::loss_type == LossType::INTENSITY)
             std::cerr << fmt::sprintf("\tintnll: %.4f", intnll);*/
 		std::cerr << std::endl;
@@ -53,7 +53,8 @@ public:
 	virtual void PrintTestResults(DataLoader<TEST>* dataset, std::map<std::string, Dtype>& loss_map) override
 	{			
         Dtype rmse = loss_map["mse_0"], mae = loss_map["mae_0"];
-        rmse = sqrt(rmse / dataset->num_samples);
+        std::cerr << "num samples" << dataset -> num_samples << std::endl;
+	rmse = sqrt(rmse / dataset->num_samples);
         mae /= dataset->num_samples;
         std::cerr << fmt::sprintf("test_mae: %.6f\t test_rmse: %.6f", mae, rmse);    
 	
@@ -199,7 +200,7 @@ public:
 	    
         //if (cfg::loss_type == LossType::MSE)
         {
-            cl< MSECriterionLayer >(fmt::sprintf("mse_%d", time_step), gnn, {value_out_layer, value_label_layer}, PropErr::N);
+            cl< MSECriterionLayer >(fmt::sprintf("mse_%d", time_step), gnn, {value_out_layer, value_label_layer}, PropErr::T);
             cl< ABSCriterionLayer >(fmt::sprintf("mae_%d", time_step), gnn, {value_out_layer, value_label_layer}, PropErr::N);
         }
 	/*

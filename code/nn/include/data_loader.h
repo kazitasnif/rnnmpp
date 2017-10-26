@@ -28,13 +28,14 @@ public:
 	value_label_sequences.clear();
         cursors.resize(batch_size);
         index_pool.clear();
-    } 
+        num_samples = 0; 
+   } 
     
 
     inline void InsertSequence(int* event_seq, Dtype* time_seq, Dtype* time_label, int seq_len)
     {
         num_samples += seq_len - 1;
-        InsertSequence(event_seq, event_sequences, seq_len);
+	InsertSequence(event_seq, event_sequences, seq_len);
         InsertSequence(time_seq, time_sequences, seq_len); 
         InsertSequence(time_label, time_label_sequences, seq_len - 1); 
     }
@@ -45,7 +46,8 @@ public:
 	, int seq_len)
     {
         num_samples += seq_len - 1;
-        InsertSequence(event_seq, event_sequences, seq_len);
+//        std::cerr << "num samples with value in insert seq: " << num_samples << std::endl;
+	InsertSequence(event_seq, event_sequences, seq_len);
         InsertSequence(time_seq, time_sequences, seq_len); 
         InsertSequence(time_label, time_label_sequences, seq_len - 1); 
 	InsertSequence(value_seq, value_sequences, seq_len);
@@ -53,8 +55,10 @@ public:
     
     virtual void StartNewEpoch()
     {
-        initialized = true;
-        if (index_pool.size() != event_sequences.size())
+        std::cerr << "starting new epoch" << std::endl;
+	initialized = true;
+        std::cerr << "num samples before epoch" << std::endl;
+	if (index_pool.size() != event_sequences.size())
         {
             index_pool.clear();
             assert(event_sequences.size() == time_sequences.size()); 
@@ -77,7 +81,6 @@ public:
 	cursors[0].second = 0;
     } 
     size_t num_samples, num_events, batch_size; 
-
     void ReloadSlot(unsigned batch_idx)    
     {
         index_pool.push_back(cursors[batch_idx].first); 
@@ -144,25 +147,34 @@ public:
                               std::vector< IMatrix<mode, Dtype>* >& g_time_label,
 			      std::vector< IMatrix<mode, Dtype>* >& g_value_label)
     {
-        if (!initialized)
-            this->StartNewEpoch();
-
+        if (!initialized){
+            	std::cerr << "not initialized" << std::endl;
+		this->StartNewEpoch();
+	}
+///	std::cerr << "index pool size: " << index_pool.size() << std::endl;
+	/*		
+	for(unsigned i = 0; i < cursors.size(); i++){
+	  std::cerr << cursors[i].first << " " << cursors[i].second << std::endl; 
+	}*/
         for (unsigned i = 0; i < this->batch_size; ++i)
         {
             // need to load a new sequences                                   
-            if (cursors[i].second + bptt >= event_sequences[cursors[i].first].size())
+	    if (cursors[i].second + bptt >= event_sequences[cursors[i].first].size())
             {                              
                 this->ReloadSlot(g_last_hidden, i); 
             }
+			
+//            if(cursors[i].first == 0 && cursors[i].second == 0) std::cerr << "starting from 0" << std::endl;
         }
         for (int j = 0; j < bptt; ++j)
         {                                  
             etloader->LoadEvent(this, g_event_input[j], g_event_label[j], this->batch_size, j);                        
             etloader->LoadTime(this, g_time_input[j], g_time_label[j], this->batch_size, j);           
-            if(cfg::has_value){
+            //g_time_input[j] -> Print2Screen();        
+	    if(cfg::has_value){
 	      etloader->LoadValue(this, g_value_input[j], g_value_label[j], this->batch_size, j);           
 	    }
-	}        
+	}
         for (unsigned i = 0; i < this->batch_size; ++i)
             cursors[i].second += bptt;           
     }
@@ -192,7 +204,8 @@ public:
         if (!this->initialized)
             this->StartNewEpoch();
         unsigned delta_size = 0;                    
-        for (unsigned i = 0; i < cur_batch_size; ++i)
+        //std::cerr << "index pool size in nextbatch " << index_pool.size() << std::endl;
+	for (unsigned i = 0; i < cur_batch_size; ++i)
         {
             // need to load a new sequences                                   
             if (cursors[i].second + 1 >= event_sequences[cursors[i].first].size())
@@ -408,13 +421,14 @@ public:
          
         for (unsigned i = 0; i < cur_batch_size; ++i)
         {
-            
+            //std::cerr << d -> time_sequences[d->cursors[i].first][d->cursors[i].second + step] << std::endl;    
 	    this->time_feat_cpu.data[i] = d->time_sequences[d->cursors[i].first][d->cursors[i].second + step];
             this->time_label_cpu.data[i] = d->time_label_sequences[d->cursors[i].first][d->cursors[i].second + step];
         }
-        
+	//std::cerr << "****" << std::endl;
         feat.CopyFrom(this->time_feat_cpu);
-        label.CopyFrom(this->time_label_cpu);
+        //feat.Print2Screen();
+	label.CopyFrom(this->time_label_cpu);
     }
 
     DenseMat<CPU, Dtype> time_feat_cpu, time_label_cpu;

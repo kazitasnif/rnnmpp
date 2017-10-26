@@ -1,4 +1,5 @@
 #include "intensity_nll_criterion_layer.h"
+#include <limits>
 
 template<MatMode mode, typename Dtype>
 IntensityNllCriterionLayer<mode, Dtype>::IntensityNllCriterionLayer(std::string _name, LinearParam<mode, Dtype>* _w, Dtype _lambda, PropErr _properr)
@@ -23,24 +24,38 @@ void IntensityNllCriterionLayer<mode, Dtype>::UpdateOutput(std::vector< ILayer<m
         assert(operands.size() == 2);       
         
         w_scalar = w->p["weight"]->value.AsScalar();       
-        auto& vt_hj = operands[0]->state->DenseDerived();                
-        auto& cur_state = this->state->DenseDerived();
+	
+	//std::cerr << "w_scalar" <<  w_scalar << std::endl;
+	auto& vt_hj = operands[0]->state->DenseDerived();                
+//        vt_hj.Print2Screen();
+	auto& debug_vt_hj = vt_hj;
+	auto& cur_state = this->state->DenseDerived();
         
         // cur_state = v^T h_j + b + w^T dt;
         cur_state.CopyFrom(vt_hj);                        
-        w->UpdateOutput(operands[1]->state, &cur_state, 1.0, phase);
+        
+	w->UpdateOutput(operands[1]->state, &cur_state, 1.0, phase);
                         
         // exp(v^th_j + b)
         buffer.Exp(vt_hj);
-        
+        auto& debug_buffer = buffer;
         auto& grad = this->grad->DenseDerived();        
         grad.Exp(cur_state);
-        grad.Axpy(-1.0, buffer);
+    
+	grad.Axpy(-1.0, buffer);
         grad.Scale(1.0 / w_scalar);
         
         buffer.GeaM(1.0, Trans::N, grad, -1.0, Trans::N, cur_state);        
                         
-        this->loss = buffer.Sum();                                                                                                                  
+        this->loss = buffer.Sum();        
+	if(this->loss <= -1.0 * std::numeric_limits<double>::infinity() || this -> loss >= std::numeric_limits<double>::infinity() || !(this -> loss == this -> loss)){
+	    
+          std::cerr << w_scalar << std::endl;
+	  std::cerr << "intensity loss overflowed or nan" << std::endl;
+	  debug_vt_hj.Print2Screen();
+	  debug_buffer.Print2Screen();
+		
+	}                                                                                                         
 }
 
 template<MatMode mode, typename Dtype>

@@ -23,6 +23,7 @@
 #include "intensity_nll_criterion_layer.h"
 #include "dur_pred_layer.h"
 #include "learner.h"
+#include <limits>
 
 template<MatMode mode, typename Dtype>
 class INet
@@ -55,7 +56,7 @@ public:
 	//LinkTestData(); 
 	llh_map.clear();
         dl -> BeforeForwardSeq(seq_num);
-	std::cerr << "after beforeForwardSeq" << std::endl;
+	//std::cerr << "after beforeForwardSeq" << std::endl;
 		
 	//InitGraphData(g_event_input, g_event_label, g_time_input, g_time_label, g_value_input, g_value_label);
 	/*using the NextBatch code for forwarding a sequence with batch size = 1 */  
@@ -98,9 +99,29 @@ public:
                 net_test.GetState("recurrent_hidden_0", last_hidden_test);            
         }
 	
-      	std::cerr << "ret: " << ret << std::endl;  	
+      	//std::cerr << "ret: " << ret << std::endl;  	
 	//InitGraphData(g_event_input, g_event_label, g_time_input, g_time_label, g_value_input, g_value_label);
       	return ret;
+
+    }
+    void CalculateLLH(const char* prefix, DataLoader<TEST>* dataset, bool writeTofile){
+	
+	std::map<std::string, Dtype> llh_map;
+	std::vector<double> llh_vec;
+	
+	for(size_t i = 0; i < dataset -> time_sequences.size(); i++){
+	  llh_vec.push_back(llh(dataset, llh_map, i));
+	}
+	std::cout << "llh vec size: " << llh_vec.size() << std::endl;
+	std::cout << llh_vec[0] << " " << llh_vec[1] << std::endl;
+	FILE* fid = nullptr;
+	if (writeTofile){
+            fid = fopen(fmt::sprintf("%s/%s.txt", cfg::save_dir, prefix).c_str(), "w");
+     	    for(size_t i = 0; i < llh_vec.size(); i++) fprintf(fid, "%f\n", llh_vec[i]);
+	    //fprintf(fid, "\n");
+	}
+	fclose(fid);
+	std::cout << std::endl;
 
     }
     void EvaluateDataset(const char* prefix, DataLoader<TEST>* dataset, bool save_prediction, std::map<std::string, Dtype>& test_loss_map)
@@ -115,7 +136,8 @@ public:
         if (save_prediction)
             fid = fopen(fmt::sprintf("%s/%s_pred_iter_%d.txt", cfg::save_dir, prefix, cfg::iter).c_str(), "w");
        	std::cerr << "file open" << std::endl; 
-        while (dataset->NextBatch(etloader, 
+        size_t called_nextbatch = 0;
+	while (dataset->NextBatch(etloader, 
                                   g_last_hidden_test, 
                                   g_event_input[0], 
                                   g_time_input[0], 
@@ -125,6 +147,10 @@ public:
 				  g_value_label[0]))
         {                        
             //std::cerr << "loaded batch" << std::endl;
+	    //g_event_input[0] -> Print2Screen();
+	   // g_value_input[0] -> Print2Screen();
+	    //g_time_input[0] -> Print2Screen();
+	    called_nextbatch++;
 	    net_test.FeedForward(test_dict, TEST);
             auto loss_map = net_test.GetLoss();
             for (auto it = loss_map.begin(); it != loss_map.end(); ++it)
@@ -134,23 +160,47 @@ public:
 		//std::cerr << "debugging inside evaluate dataset" << std::endl;
 		//std::cerr << it -> first << " " << it -> second << std::endl;
                 test_loss_map[it->first] += it->second;
-            }
-	    
-	    for(auto it = test_loss_map.begin(); it != test_loss_map.end(); ++it){
-		std::cerr << it -> first << " " << it -> second << std::endl;
+		//time_input[0] -> Print2Screen();
+		/*
+            	if(test_loss_map[it -> first] >= std::numeric_limits<Dtype>::infinity() || test_loss_map[it->first] <= -1.0 * std::numeric_limits<Dtype>::infinity()){
+		     
+		     std::cerr << it -> first << " " << it -> second << std::endl;
+              
+		     g_event_input[0] -> Print2Screen();
+	             g_value_input[0] -> Print2Screen();
+	             g_time_input[0] -> Print2Screen();
+	    	}*/
 		
 	    }
+	    
+	    /*for(auto it = test_loss_map.begin(); it != test_loss_map.end(); ++it){
+		std::cerr << it -> first << " " << it -> second << std::endl;
+		
+	    }*/
             if (save_prediction)
                 WriteTestBatch(fid);
             if (cfg::bptt > 1)
                 net_test.GetState("recurrent_hidden_0", last_hidden_test);            
-        }
-        if (save_prediction)
-            fclose(fid);
-    }
+        
+	    /*std::cerr << "g_last_hidden_test" << std::endl;
+	    g_last_hidden_test -> Print2Screen();
+	    std::cerr << "last_hidden_test" << std::endl;
+	    last_hidden_test.Print2Screen();*/
+	
+	}
+	std::cerr << "called nextbatch " << called_nextbatch << std::endl;
+        if (save_prediction) fclose(fid);
+    	}
     
 	void MainLoop()
 	{
+	/*
+	for(size_t i = 0; i <  train_data -> time_sequences.size(); i++){
+	  for(size_t j = 0; j < train_data -> time_sequences[i].size(); j++){
+	    std::cerr << train_data -> time_sequences[i][j] << " ";
+	  }
+	  std::cerr << std::endl;
+	}*/
         if (!initialized)
             Setup();
 
@@ -159,7 +209,7 @@ public:
     
     	if (init_iter > 0)
     	{
-        	std::cerr << fmt::sprintf("loading model for iter=%d", init_iter) << std::endl;
+            std::cerr << fmt::sprintf("loading model for iter=%d", init_iter) << std::endl;
             model.Load(fmt::sprintf("%s/iter_%d.model", cfg::save_dir, init_iter));
     	}
         			
@@ -170,7 +220,8 @@ public:
     	last_hidden_train.Zeros(cfg::batch_size, cfg::n_hidden);
     	std::map<std::string, Dtype> test_loss_map;
 	std::map<std::string, Dtype> llh_map;
-
+        	
+       	train_data -> StartNewEpoch(); /*not in the original codebase*/ 
     	for (; cfg::iter <= max_iter; ++cfg::iter)
     	{
         	if (cfg::iter % cfg::test_interval == 0)
@@ -178,7 +229,12 @@ public:
     	        std::cerr << "testing" << std::endl;
         	    
                 EvaluateDataset("test", test_data, true, test_loss_map);
-                //std::cerr << "after evaluate dataset" << std::endl;
+		//std::cerr << "after evaluate dataset" << std::endl;
+		for(auto it = test_loss_map.begin(); it != test_loss_map.end(); ++it){
+		std::cerr << it -> first << " " << it -> second << std::endl;
+		
+	    	}
+           
 		PrintTestResults(test_data, test_loss_map);
 		/*for(unsigned i = 0; i < test_data -> event_sequences.size(); i++){
 		  std::cout << "llh: " << llh(test_data, llh_map, i) << " ";
@@ -196,7 +252,6 @@ public:
             	std::cerr << fmt::sprintf("saving model for iter = %d", cfg::iter) << std::endl;
                 model.Save(fmt::sprintf("%s/iter_%d.model", cfg::save_dir, cfg::iter));
         	}
-        
         	train_data->NextBpttBatch(etloader, 
                                       cfg::bptt, 
             	                      g_last_hidden_train, 
@@ -206,10 +261,16 @@ public:
                         	          g_event_label, 
                             	      g_time_label,
 				      g_value_label);
-        
-        	net_train.FeedForward(train_dict, TRAIN);
+       		
+		//g_event_input[0] -> Print2Screen(); 
+        	//g_time_input[0] -> Print2Screen();
+		net_train.FeedForward(train_dict, TRAIN);
         	auto loss_map = net_train.GetLoss();
-            if (cfg::bptt > 1 && cfg::use_history)
+            	/*std::cerr << "train loss" << std::endl;
+		for (auto it = loss_map.begin(); it != loss_map.end(); ++it){
+		  std::cerr << it -> first << " " << it -> second << std::endl;
+		}*/	
+	    if (cfg::bptt > 1 && cfg::use_history)
             {
                 net_train.GetState(fmt::sprintf("recurrent_hidden_%d", cfg::bptt - 1), last_hidden_train);
             }
@@ -221,7 +282,11 @@ public:
         	{
         		PrintTrainBatchResults(loss_map);
         	}
+		if(cfg::iter == max_iter){
+		  CalculateLLH("llh_test_survived", test_data, true);
+		}
     	}
+	
 	}
 
 	NNGraph<mode, Dtype> net_train, net_test;
