@@ -9,8 +9,8 @@
 #include <ctime>
 #include <curand_kernel.h>
 
-#define NUM_RND_BLOCKS                      96
-#define NUM_RND_THREADS_PER_BLOCK           128
+#define NUM_RND_BLOCKS                      32
+#define NUM_RND_THREADS_PER_BLOCK           32
 #define NUM_RND_STREAMS                     (NUM_RND_BLOCKS * NUM_RND_THREADS_PER_BLOCK)
 
 struct GPUHandle
@@ -21,7 +21,7 @@ struct GPUHandle
 	static curandGenerator_t curandgenerator;
 	static unsigned int streamcnt;
 	
-	static void Init(int dev_id, unsigned int _streamcnt = 1U);
+	static void Init(int dev_id, unsigned int _streamcnt = 8U);
 	static void Destroy();
 	
 	static curandState_t* devRandStates;

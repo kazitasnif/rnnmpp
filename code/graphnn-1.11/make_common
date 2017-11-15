@@ -2,7 +2,7 @@ dir_guard = @mkdir -p $(@D)
 
 MKL_ROOT := /opt/linux/centos/7.x/x86_64/pkgs/intel/mkl/2017.2.174/compilers_and_libraries_2017.4.196/linux/mkl
 #source $(which mklvars.sh) MKL_ROOT
-CUDA_HOME := /opt/linux/centos/7.x/x86_64/pkgs/cuda/7.0
+CUDA_HOME := /opt/linux/centos/7.x/x86_64/pkgs/cuda/8.0
 #CUDA_HOME := /usr/local/cuda
 #MKL_ROOT := /opt/intel/mkl
 
@@ -12,9 +12,9 @@ CXX := g++
 NVCC := $(CUDA_HOME)/bin/nvcc
 CXXFLAGS += -Wall -O2 -std=c++11 -Wl,-rpath=/rhome/kislam/build/fmt
 LDFLAGS += -lm -L$(CUDA_HOME)/lib64 -L/rhome/kislam/build/fmt -lcudart -lcublas -lcurand -lcusparse -lmkl_rt -lfmt #-lwht
-CUDA_ARCH := -gencode arch=compute_20,code=sm_20 \
-		-gencode arch=compute_20,code=sm_21 \
-		-gencode arch=compute_30,code=sm_30 \
-		-gencode arch=compute_35,code=sm_35 \
-		-gencode arch=compute_50,code=sm_50 \
+CUDA_ARCH := -gencode arch=compute_20,code=sm_37 \
+		-gencode arch=compute_20,code=sm_37 \
+		-gencode arch=compute_30,code=sm_37 \
+		-gencode arch=compute_35,code=sm_37 \
+		-gencode arch=compute_37,code=sm_37 \
 		-gencode arch=compute_50,code=compute_50

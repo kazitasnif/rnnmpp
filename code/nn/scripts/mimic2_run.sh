@@ -1,11 +1,13 @@
 #!/bin/bash
 
 task=mimic2
-prefix_event=event
-prefix_time=time
+prefix_event=event-1
+prefix_time=time-1
 
-DATA_ROOT=$HOME/Research/NeuralPointProcess/data/real/$task
-RESULT_ROOT=$HOME/scratch/results/NeuralPointProcess
+DATA_ROOT=$HOME/rnnmpp/data/real/$task
+RESULT_ROOT=$HOME/scratch/results/rnnmpp
+
+
 
 hist=0
 gru=0
@@ -14,7 +16,7 @@ H=32
 h2=16
 bsize=64
 bptt=2
-learning_rate=0.01
+learning_rate=0.001
 max_iter=400000
 cur_iter=0
 T=0

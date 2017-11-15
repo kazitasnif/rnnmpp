@@ -14,7 +14,7 @@
 #include "value_net.h"
 #include "joint_value_net.h"
 
-const MatMode mode = CPU;
+const MatMode mode = GPU;
 
 template<MatMode mode>
 void Work()
@@ -56,14 +56,15 @@ void Work()
 int main(const int argc, const char** argv)
 {	
     cfg::LoadParams(argc, argv);    
-	GPUHandle::Init(cfg::dev_id);
+    GPUHandle::Init(cfg::dev_id);
     
     LoadDataFromFile();
 
     if (cfg::device_type == CPU)
         Work<CPU>();
     else
-        Work<GPU>(); 
+        std::cerr <<  "gpu" << std::endl;
+	Work<GPU>(); 
 
 	GPUHandle::Destroy();
 	return 0;

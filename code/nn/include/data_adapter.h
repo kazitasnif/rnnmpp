@@ -226,11 +226,17 @@ inline void LoadDataFromFile()
     train_data = new DataLoader<TRAIN>(num_events, cfg::batch_size); 
     test_data = new DataLoader<TEST>(num_events, cfg::batch_size);
     val_data = new DataLoader<TEST>(num_events, 1);
+    train_eval = new DataLoader<TEST>(num_events, cfg::batch_size);
 
     std::cerr << "before insert 2 loader" << std::endl;
     Insert2Loader(train_data, raw_event_train, raw_time_train, raw_value_train, cfg::bptt);
     Insert2Loader(test_data, raw_event_test, raw_time_test, raw_value_test, 1);
-
+    /***/ 
+    train_eval -> time_sequences = train_data -> time_sequences;
+    train_eval -> event_sequences = train_data -> event_sequences;
+    train_eval -> time_label_sequences = train_data -> time_label_sequences;
+    if(cfg::has_value) train_eval -> value_sequences = train_data -> value_sequences;
+    /***/
     std::cerr << "#train: " << train_data->num_samples << " #test: " << test_data->num_samples << std::endl;
     if (cfg::has_eval)
         std::cerr << "#eval: " << val_data->num_samples << std::endl;

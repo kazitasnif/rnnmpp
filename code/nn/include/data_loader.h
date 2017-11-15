@@ -505,6 +505,7 @@ public:
 
 DataLoader<TRAIN>* train_data;
 DataLoader<TEST>* test_data, *val_data;
+DataLoader<TEST>* train_eval;
 
 
 #endif

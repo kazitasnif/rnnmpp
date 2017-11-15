@@ -283,7 +283,7 @@ public:
         		PrintTrainBatchResults(loss_map);
         	}
 		if(cfg::iter == max_iter){
-		  CalculateLLH("llh_test_survived", test_data, true);
+		  CalculateLLH("llh_test_survived_w_val", test_data, true);
 		}
     	}
 	
